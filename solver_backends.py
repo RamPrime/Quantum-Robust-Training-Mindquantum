@@ -170,6 +170,10 @@ def _solve_classical_with_info(
     return x, info
 
 
+def _fallback_dense_limit(max_dense_dim: int) -> int:
+    return max(1, min(int(max_dense_dim), 4096))
+
+
 def solve_linear_system_with_info(
     matvec: Callable[[np.ndarray], np.ndarray],
     b: np.ndarray,
@@ -227,9 +231,6 @@ def solve_linear_system_with_info(
         info["rel_residual"] = _relative_residual(matvec, rhs, x)
         return x, info
 
-    dense_matrix = _dense_from_matvec(matvec, dim)
-    info["used_dense_reconstruction"] = True
-
     if not MQ_AVAILABLE:
         if strict_hhl:
             if _HHL_IMPORT_ERROR:
@@ -239,18 +240,21 @@ def solve_linear_system_with_info(
             matvec,
             rhs,
             precision,
-            backend="dense",
-            dense_matrix=dense_matrix,
-            max_dense_dim=max_dense_dim,
+            backend="auto",
+            dense_matrix=None,
+            max_dense_dim=_fallback_dense_limit(max_dense_dim),
         )
         info.update(backend_info)
-        info["execution_mode"] = "classical_small_scale"
+        info["execution_mode"] = "classical_fallback_no_mindquantum"
         if _HHL_IMPORT_ERROR:
             info["fallback_reason"] = f"mindquantum unavailable ({_HHL_IMPORT_ERROR})"
         else:
             info["fallback_reason"] = "mindquantum unavailable"
         info["rel_residual"] = _relative_residual(matvec, rhs, x)
         return x, info
+
+    dense_matrix = _dense_from_matvec(matvec, dim)
+    info["used_dense_reconstruction"] = True
 
     info["used_mindquantum"] = True
     info["used_quantum_circuit"] = True
@@ -280,9 +284,9 @@ def solve_linear_system_with_info(
             matvec,
             rhs,
             precision,
-            backend="dense",
-            dense_matrix=dense_matrix,
-            max_dense_dim=max_dense_dim,
+            backend="auto",
+            dense_matrix=None,
+            max_dense_dim=_fallback_dense_limit(max_dense_dim),
         )
         info.update(backend_info)
         info["execution_mode"] = "quantum_rejected_to_classical"
@@ -300,9 +304,9 @@ def solve_linear_system_with_info(
             matvec,
             rhs,
             precision,
-            backend="dense",
-            dense_matrix=dense_matrix,
-            max_dense_dim=max_dense_dim,
+            backend="auto",
+            dense_matrix=None,
+            max_dense_dim=_fallback_dense_limit(max_dense_dim),
         )
         info.update(backend_info)
         info["execution_mode"] = "quantum_exception_to_classical"

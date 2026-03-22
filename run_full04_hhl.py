@@ -123,7 +123,7 @@ def main() -> None:
     config.QRT_DISABLE_W_PHASE = bool(args.disable_adv)
     config.SOLVER_DIAGNOSTICS = bool(args.solver_diagnostics)
     config.LINEAR_SOLVER_BACKEND = "hhl_research"
-    config.STRICT_HHL = True
+    config.STRICT_HHL = False
     config.CARLEMAN_N = 2
     config.QRT_OBJECTIVE_MODE = "batch_perturbation"
     config.QRT_W_DIM_MODE = "per_sample"
